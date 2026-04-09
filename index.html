@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMPACTA - Share Ideas</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #E31B23 0%, #8B0000 50%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff, #ff9999);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        input::placeholder, textarea::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(135deg, #E31B23, #b01018);
+            color: white;
+            transition: transform 0.2s;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .idea-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: left;
+        }
+        .idea-question {
+            font-weight: bold;
+            color: #ff9999;
+            margin-bottom: 8px;
+        }
+        .idea-author {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        .helpful-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 5px 15px;
+            width: auto;
+            margin-top: 10px;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .nav-buttons button {
+            width: 50%;
+            background: rgba(255,255,255,0.2);
+        }
+        .active-tab {
+            background: linear-gradient(135deg, #E31B23, #b01018) !important;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        #appBox {
+            display: none;
+        }
+        .hidden {
+            display: none;
+        }
+        .success {
+            background: #00C853;
+            color: white;
+            padding: 10px;
+            border-radius: 50px;
+            margin: 10px 0;
+            animation: fadeOut 3s ease forwards;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- LOGIN SECTION -->
+        <div id="loginBox" class="card">
+            <h1>🌱 IMPACTA</h1>
+            <p style="margin-bottom: 20px;">Small steps lead to big impact</p>
+            <input type="text" id="username" placeholder="Enter your username">
+            <button id="loginButton">Login or Sign Up</button>
+            <p style="margin-top: 15px; font-size: 0.8rem;">No password needed</p>
+        </div>
+
+        <!-- MAIN APP SECTION -->
+        <div id="appBox" class="card">
+            <h2>Welcome, <span id="currentUser">---</span>!</h2>
+            
+            <div class="nav-buttons">
+                <button id="feedTabBtn" class="active-tab">Feed</button>
+                <button id="postTabBtn">Post Idea</button>
+                <button id="profileTabBtn">Profile</button>
+            </div>
+
+            <!-- FEED TAB -->
+            <div id="feedTab">
+                <div id="feedList" class="loading">Loading ideas...</div>
+            </div>
+
+            <!-- POST TAB -->
+            <div id="postTab" class="hidden">
+                <textarea id="question" rows="2" placeholder="What is the problem or question?"></textarea>
+                <textarea id="answer" rows="3" placeholder="What is your solution or answer?"></textarea>
+                <button id="postBtn">📤 Post Solution</button>
+            </div>
+
+            <!-- PROFILE TAB -->
+            <div id="profileTab" class="hidden">
+                <div style="background: rgba(255,255,255,0.1); border-radius: 20px; padding: 20px;">
+                    <p>📝 Ideas posted: <strong id="profileIdeas">0</strong></p>
+                    <p>✅ People helped: <strong id="profileHelpful">0</strong></p>
+                    <p>🏆 Impact points: <strong id="profilePoints">0</strong></p>
+                </div>
+            </div>
+
+            <button id="logoutBtn" style="margin-top: 20px; background: rgba(255,255,255,0.2);">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // ============ SUPABASE SETUP ============
+        const SUPABASE_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5d29ra2ZuaG94d2JvaHlsaXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzQ5NzAsImV4cCI6MjA5MTE1MDk3MH0.hWrtxQ68HAqCz6ENf0DMkU-F2roQpndh_KErZHDz_6c';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let currentUser = null;
+        let allIdeas = [];
+
+        // ============ DOM ELEMENTS ============
+        const loginBox = document.getElementById('loginBox');
+        const appBox = document.getElementById('appBox');
+        const currentUserSpan = document.getElementById('currentUser');
+        const feedList = document.getElementById('feedList');
+        const questionInput = document.getElementById('question');
+        const answerInput = document.getElementById('answer');
+        const feedTab = document.getElementById('feedTab');
+        const postTab = document.getElementById('postTab');
+        const profileTab = document.getElementById('profileTab');
+        const profileIdeasSpan = document.getElementById('profileIdeas');
+        const profileHelpfulSpan = document.getElementById('profileHelpful');
+        const profilePointsSpan = document.getElementById('profilePoints');
+
+        // ============ LOGIN ============
+        document.getElementById('loginButton').onclick = async () => {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                alert("Enter a username");
+                return;
+            }
+            currentUser = username;
+            currentUserSpan.innerText = username;
+            loginBox.style.display = 'none';
+            appBox.style.display = 'block';
+            await loadFeed();
+        };
+
+        // ============ LOGOUT ============
+        document.getElementById('logoutBtn').onclick = () => {
+            currentUser = null;
+            loginBox.style.display = 'block';
+            appBox.style.display = 'none';
+            document.getElementById('username').value = '';
+        };
+
+        // ============ TAB SWITCHING ============
+        document.getElementById('feedTabBtn').onclick = () => {
+            feedTab.classList.remove('hidden');
+            postTab.classList.add('hidden');
+            profileTab.classList.add('hidden');
+            document.getElementById('feedTabBtn').classList.add('active-tab');
+            document.getElementById('postTabBtn').classList.remove('active-tab');
+            document.getElementById('profileTabBtn').classList.remove('active-tab');
+            loadFeed();
+        };
+        
+        document.getElementById('postTabBtn').onclick = () => {
+            feedTab.classList.add('hidden');
+            postTab.classList.remove('hidden');
+            profileTab.classList.add('hidden');
+            document.getElementById('postTabBtn').classList.add('active-tab');
+            document.getElementById('feedTabBtn').classList.remove('active-tab');
+            document.getElementById('profileTabBtn').classList.remove('active-tab');
+        };
+        
+        document.getElementById('profileTabBtn').onclick = () => {
+            feedTab.classList.add('hidden');
+            postTab.classList.add('hidden');
+            profileTab.classList.remove('hidden');
+            document.getElementById('profileTabBtn').classList.add('active-tab');
+            document.getElementById('feedTabBtn').classList.remove('active-tab');
+            document.getElementById('postTabBtn').classList.remove('active-tab');
+            updateProfile();
+        };
+
+        // ============ POST IDEA ============
+        document.getElementById('postBtn').onclick = async () => {
+            if (!currentUser) return;
+            const question = questionInput.value.trim();
+            const answer = answerInput.value.trim();
+            if (!question || !answer) {
+                alert("Please write both a question and an answer");
+                return;
+            }
+            
+            const { error } = await supabase.from('ideas').insert({
+                author: currentUser,
+                question: question,
+                answer: answer,
+                helpful_count: 0
+            });
+            
+            if (error) {
+                alert("Error: " + error.message);
+                return;
+            }
+            
+            questionInput.value = '';
+            answerInput.value = '';
+            await loadFeed();
+            showSuccessMessage('✅ Idea posted! +10 impact points');
+            document.getElementById('feedTabBtn').click();
+        };
+
+        // ============ LOAD FEED ============
+        async function loadFeed() {
+            feedList.innerHTML = '<div class="loading">Loading ideas...</div>';
+            
+            const { data, error } = await supabase
+                .from('ideas')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                feedList.innerHTML = 'Error loading ideas: ' + error.message;
+                return;
+            }
+            
+            allIdeas = data || [];
+            
+            if (allIdeas.length === 0) {
+                feedList.innerHTML = 'No ideas yet. Be the first to post!';
+                return;
+            }
+            
+            feedList.innerHTML = allIdeas.map(idea => `
+                <div class="idea-card">
+                    <div class="idea-author">👤 ${escapeHtml(idea.author)}</div>
+                    <div class="idea-question">❓ ${escapeHtml(idea.question)}</div>
+                    <div>💡 ${escapeHtml(idea.answer)}</div>
+                    <button class="helpful-btn" data-id="${idea.id}">✅ Was this helpful? (${idea.helpful_count})</button>
+                </div>
+            `).join('');
+            
+            // Attach event listeners to all helpful buttons
+            document.querySelectorAll('.helpful-btn').forEach(btn => {
+                btn.onclick = () => markHelpful(parseInt(btn.dataset.id));
+            });
+        }
+
+        // ============ MARK HELPFUL ============
+        async function markHelpful(ideaId) {
+            if (!currentUser) {
+                alert("Please login first");
+                return;
+            }
+            
+            const idea = allIdeas.find(i => i.id === ideaId);
+            if (!idea) return;
+            
+            if (idea.author === currentUser) {
+                alert("You can't mark your own idea as helpful");
+                return;
+            }
+            
+            const newCount = (idea.helpful_count || 0) + 1;
+            await supabase.from('ideas').update({ helpful_count: newCount }).eq('id', ideaId);
+            await loadFeed();
+            showSuccessMessage('✅ You helped someone! +5 impact points');
+        }
+
+        // ============ UPDATE PROFILE ============
+        function updateProfile() {
+            if (!currentUser) return;
+            const myIdeas = allIdeas.filter(idea => idea.author === currentUser);
+            const ideasCount = myIdeas.length;
+            const helpfulCount = myIdeas.reduce((sum, idea) => sum + (idea.helpful_count || 0), 0);
+            const points = (ideasCount * 10) + (helpfulCount * 5);
+            
+            profileIdeasSpan.innerText = ideasCount;
+            profileHelpfulSpan.innerText = helpfulCount;
+            profilePointsSpan.innerText = points;
+        }
+
+        // ============ SHOW SUCCESS MESSAGE ============
+        function showSuccessMessage(message) {
+            const container = document.querySelector('#appBox');
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.innerText = message;
+            container.insertBefore(successDiv, container.firstChild);
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        // ============ HELPER ============
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
