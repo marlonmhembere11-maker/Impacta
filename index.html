@@ -4,399 +4,85 @@
     <title>IMPACTA</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #E31B23, #8B0000);
-            color: white;
-            text-align: center;
-            padding: 50px;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .box {
-            background: rgba(0, 0, 0, 0.4);
-            padding: 30px;
-            border-radius: 30px;
-            max-width: 500px;
-            margin: 0 auto;
-            display: block;
-        }
-        .hidden {
-            display: none !important;
-        }
-        input, textarea {
-            padding: 12px;
-            margin: 10px;
-            border-radius: 25px;
-            border: none;
-            width: 80%;
-            font-family: Arial, sans-serif;
-        }
-        textarea {
-            resize: vertical;
-        }
-        button {
-            padding: 12px 24px;
-            margin: 10px;
-            border-radius: 25px;
-            border: none;
-            background: white;
-            color: #E31B23;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        button:hover {
-            transform: scale(1.05);
-        }
-        .idea {
-            background: rgba(255, 255, 255, 0.1);
-            margin: 10px;
-            padding: 15px;
-            border-radius: 15px;
-            text-align: left;
-        }
-        .idea button {
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-        #feed {
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 10px;
-        }
-        .error-message {
-            color: #ffcccc;
-            font-style: italic;
-        }
+        body{font-family:Arial;background:linear-gradient(135deg,#E31B23,#8B0000);color:white;text-align:center;padding:50px;}
+        .box{background:rgba(0,0,0,0.4);padding:30px;border-radius:30px;max-width:500px;margin:0 auto;}
+        input,textarea{padding:12px;margin:10px;border-radius:25px;border:none;width:80%;}
+        button{padding:12px 24px;margin:10px;border-radius:25px;border:none;background:white;color:#E31B23;font-weight:bold;cursor:pointer;}
+        .hidden{display:none;}
+        .idea{background:rgba(255,255,255,0.1);margin:10px;padding:15px;border-radius:15px;text-align:left;}
     </style>
 </head>
 <body>
 <div id="loginBox" class="box">
-    <h1>🚀 IMPACTA</h1>
-    <p>Share your ideas and help others</p>
-    <input type="text" id="username" placeholder="Enter username" maxlength="50">
+    <h1>IMPACTA</h1>
+    <input type="text" id="username" placeholder="Enter username">
     <br>
-    <button id="loginBtn">Login / Sign Up</button>
-<footer>
-   <p>&copy;2026 IMPACTA WEB APP , LLC . ALL RIGHTS RESERVED</p>
-</footer>
+    <button id="loginBtn">Login</button>
 </div>
-
 <div id="appBox" class="box hidden">
-    <h2>Welcome, <span id="userName"></span>! 👋</h2>
-    <textarea id="question" rows="3" placeholder="What's your question? 🤔"></textarea>
-    <textarea id="answer" rows="3" placeholder="What's your answer? 💭"></textarea>
+    <h2>Welcome, <span id="userName"></span>!</h2>
+    <textarea id="question" rows="2" placeholder="Your question?"></textarea>
+    <textarea id="answer" rows="2" placeholder="Your answer?"></textarea>
     <br>
-    <button id="postBtn">📤 Post Idea</button>
-    
-    <h3>📋 Community Feed</h3>
-    <div id="feed">
-        <p>Loading ideas...</p>
-    </div>
-    
-    <button id="logoutBtn" style="margin-top: 20px;">🚪 Logout</button>
+    <button id="postBtn">Post Idea</button>
+    <h3>Feed</h3>
+    <div id="feed"></div>
+    <button id="logoutBtn">Logout</button>
 </div>
-
 <script>
-// Supabase configuration
-const SUPABASE_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5d29ra2ZuaG94d2JvaHlsaXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzQ5NzAsImV4cCI6MjA5MTE1MDk3MH0.hWrtxQ68HAqCz6ENf0DMkU-F2roQpndh_KErZHDz_6c';
-
-// Initialize Supabase client
-let supabase;
-try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log('✅ Supabase client initialized successfully');
-} catch (error) {
-    console.error('❌ Failed to initialize Supabase:', error);
-    alert('Failed to connect to database. Please refresh the page.');
-}
-
+// ONLY ONE DECLARATION - NO DUPLICATE
+const MY_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
+const MY_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5d29ra2ZuaG94d2JvaHlsaXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzQ5NzAsImV4cCI6MjA5MTE1MDk3MH0.hWrtxQ68HAqCz6ENf0DMkU-F2roQpndh_KErZHDz_6c';
+const sb = window.supabase.createClient(MY_URL, MY_KEY);
 let currentUser = null;
 
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 IMPACTA app loaded');
-    
-    // Login handler
-    document.getElementById('loginBtn').addEventListener('click', async function() {
-        const username = document.getElementById('username').value.trim();
-        
-        if (!username) {
-            alert('⚠️ Please enter a username');
-            return;
-        }
-        
-        if (username.length < 3) {
-            alert('⚠️ Username must be at least 3 characters');
-            return;
-        }
-        
-        currentUser = username;
-        document.getElementById('userName').textContent = username;
-        
-        // Switch views
-        document.getElementById('loginBox').classList.add('hidden');
-        document.getElementById('appBox').classList.remove('hidden');
-        
-        console.log('✅ User logged in:', username);
-        await loadFeed();
-    });
-    
-    // Logout handler
-    document.getElementById('logoutBtn').addEventListener('click', function() {
-        console.log('👋 User logged out:', currentUser);
-        currentUser = null;
-        
-        // Clear all fields
-        document.getElementById('username').value = '';
-        document.getElementById('question').value = '';
-        document.getElementById('answer').value = '';
-        document.getElementById('feed').innerHTML = '<p>Loading ideas...</p>';
-        
-        // Switch views
-        document.getElementById('loginBox').classList.remove('hidden');
-        document.getElementById('appBox').classList.add('hidden');
-    });
-    
-    // Post idea handler
-    document.getElementById('postBtn').addEventListener('click', async function() {
-        if (!currentUser) {
-            alert('⚠️ Please login first');
-            return;
-        }
-        
-        const question = document.getElementById('question').value.trim();
-        const answer = document.getElementById('answer').value.trim();
-        
-        if (!question || !answer) {
-            alert('⚠️ Please fill in both question and answer');
-            return;
-        }
-        
-        if (question.length < 5 || answer.length < 5) {
-            alert('⚠️ Question and answer must be at least 5 characters');
-            return;
-        }
-        
-        // Disable button during submission
-        const postBtn = document.getElementById('postBtn');
-        postBtn.disabled = true;
-        postBtn.textContent = '⏳ Posting...';
-        
-        try {
-            const { data, error } = await supabase
-                .from('ideas')
-                .insert([{
-                    author: currentUser,
-                    question: question,
-                    answer: answer,
-                    helpful_count: 0
-                }])
-                .select();
-            
-            if (error) {
-                console.error('❌ Post error:', error);
-                
-                // Check if table doesn't exist
-                if (error.message.includes('relation') && error.message.includes('does not exist')) {
-                    alert('❌ Database table not found. Please create the "ideas" table in Supabase.');
-                    console.error('Table creation needed. Create table "ideas" with columns: id, author, question, answer, helpful_count, created_at');
-                } else {
-                    alert('❌ Failed to post idea: ' + error.message);
-                }
-                return;
-            }
-            
-            console.log('✅ Idea posted successfully:', data);
-            
-            // Clear inputs
-            document.getElementById('question').value = '';
-            document.getElementById('answer').value = '';
-            
-            // Refresh feed
-            await loadFeed();
-            
-            alert('✅ Idea posted successfully!');
-        } catch (err) {
-            console.error('❌ Unexpected error:', err);
-            alert('❌ An unexpected error occurred. Please try again.');
-        } finally {
-            // Re-enable button
-            postBtn.disabled = false;
-            postBtn.textContent = '📤 Post Idea';
-        }
-    });
-    
-    // Allow Enter key to login
-    document.getElementById('username').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            document.getElementById('loginBtn').click();
-        }
-    });
-});
-
-// Load feed function
-async function loadFeed() {
-    const feedDiv = document.getElementById('feed');
-    feedDiv.innerHTML = '<p>⏳ Loading ideas...</p>';
-    
-    if (!supabase) {
-        feedDiv.innerHTML = '<p class="error-message">❌ Database connection failed</p>';
-        return;
-    }
-    
-    try {
-        const { data, error } = await supabase
-            .from('ideas')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(50);
-        
-        if (error) {
-            console.error('❌ Feed load error:', error);
-            
-            if (error.message.includes('relation') && error.message.includes('does not exist')) {
-                feedDiv.innerHTML = `
-                    <p class="error-message">❌ Database table not found</p>
-                    <p style="font-size: 12px;">Please create the "ideas" table in your Supabase dashboard with these columns:<br>
-                    id (int8, auto-increment), author (text), question (text), answer (text), helpful_count (int8, default 0), created_at (timestamptz, default now())</p>
-                `;
-            } else {
-                feedDiv.innerHTML = '<p class="error-message">❌ Error loading ideas. Please try again.</p>';
-            }
-            return;
-        }
-        
-        if (!data || data.length === 0) {
-            feedDiv.innerHTML = '<p>💡 No ideas yet. Be the first to post one!</p>';
-            return;
-        }
-        
-        console.log(`✅ Loaded ${data.length} ideas`);
-        
-        feedDiv.innerHTML = data.map(idea => `
-            <div class="idea">
-                <strong>👤 ${escapeHtml(idea.author)}</strong>
-                <p><strong>❓ ${escapeHtml(idea.question)}</strong></p>
-                <p>💡 ${escapeHtml(idea.answer)}</p>
-                <button onclick="markHelpful(${idea.id})" id="helpful-btn-${idea.id}">
-                    ✅ Helpful (${idea.helpful_count || 0})
-                </button>
-            </div>
-        `).join('');
-        
-    } catch (err) {
-        console.error('❌ Unexpected feed error:', err);
-        feedDiv.innerHTML = '<p class="error-message">❌ Failed to load feed</p>';
-    }
-}
-
-// Mark helpful function (must be global for onclick)
-window.markHelpful = async function(id) {
-    if (!currentUser) {
-        alert('⚠️ Please login first');
-        return;
-    }
-    
-    if (!supabase) {
-        alert('❌ Database connection failed');
-        return;
-    }
-    
-    const button = document.getElementById(`helpful-btn-${id}`);
-    if (button) {
-        button.disabled = true;
-        button.textContent = '⏳ Updating...';
-    }
-    
-    try {
-        // First, get the current idea
-        const { data, error } = await supabase
-            .from('ideas')
-            .select('author, helpful_count')
-            .eq('id', id)
-            .single();
-        
-        if (error) {
-            console.error('❌ Fetch error:', error);
-            alert('❌ Error fetching idea');
-            return;
-        }
-        
-        if (!data) {
-            alert('❌ Idea not found');
-            return;
-        }
-        
-        // Check if user is trying to mark their own idea
-        if (data.author === currentUser) {
-            alert('⚠️ You cannot mark your own idea as helpful');
-            return;
-        }
-        
-        // Update helpful count
-        const newCount = (data.helpful_count || 0) + 1;
-        const { error: updateError } = await supabase
-            .from('ideas')
-            .update({ helpful_count: newCount })
-            .eq('id', id);
-        
-        if (updateError) {
-            console.error('❌ Update error:', updateError);
-            alert('❌ Failed to update helpful count');
-            return;
-        }
-        
-        console.log(`✅ Updated helpful count for idea ${id} to ${newCount}`);
-        
-        // Refresh the feed
-        await loadFeed();
-        
-        alert('✅ Thanks for marking this as helpful!');
-        
-    } catch (err) {
-        console.error('❌ Unexpected error:', err);
-        alert('❌ An unexpected error occurred');
-    } finally {
-        if (button) {
-            button.disabled = false;
-            button.textContent = '✅ Helpful';
-        }
-    }
+document.getElementById('loginBtn').onclick = async function() {
+    let name = document.getElementById('username').value.trim();
+    if (!name) { alert("Enter username"); return; }
+    currentUser = name;
+    document.getElementById('userName').innerText = name;
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('appBox').style.display = 'block';
+    await loadFeed();
 };
 
-// HTML escape utility to prevent XSS
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+document.getElementById('logoutBtn').onclick = function() {
+    currentUser = null;
+    document.getElementById('loginBox').style.display = 'block';
+    document.getElementById('appBox').style.display = 'none';
+    document.getElementById('username').value = '';
+};
+
+document.getElementById('postBtn').onclick = async function() {
+    if (!currentUser) return;
+    let q = document.getElementById('question').value.trim();
+    let a = document.getElementById('answer').value.trim();
+    if (!q || !a) { alert("Write both"); return; }
+    await sb.from('ideas').insert({ author: currentUser, question: q, answer: a, helpful_count: 0 });
+    document.getElementById('question').value = '';
+    document.getElementById('answer').value = '';
+    await loadFeed();
+    alert("Posted!");
+};
+
+async function loadFeed() {
+    let feedDiv = document.getElementById('feed');
+    feedDiv.innerHTML = 'Loading...';
+    let { data } = await sb.from('ideas').select('*').order('created_at', { ascending: false });
+    if (!data || data.length === 0) { feedDiv.innerHTML = 'No ideas yet.'; return; }
+    feedDiv.innerHTML = data.map(idea => `<div class="idea"><strong>${escapeHtml(idea.author)}</strong><p><strong>❓ ${escapeHtml(idea.question)}</strong></p><p>💡 ${escapeHtml(idea.answer)}</p><button onclick="markHelpful(${idea.id})">✅ Helpful (${idea.helpful_count})</button></div>`).join('');
 }
 
-// Test Supabase connection on load
-window.addEventListener('load', async function() {
-    if (!supabase) return;
-    
-    try {
-        // Test connection by trying to get the current timestamp from Supabase
-        const { data, error } = await supabase.from('ideas').select('count', { count: 'exact', head: true });
-        
-        if (error) {
-            if (error.message.includes('relation') && error.message.includes('does not exist')) {
-                console.warn('⚠️ Database connection successful, but "ideas" table not found');
-                console.info('📝 Create the "ideas" table with: id (int8, auto-increment), author (text), question (text), answer (text), helpful_count (int8, default 0), created_at (timestamptz, default now())');
-            } else {
-                console.warn('⚠️ Supabase connection test:', error.message);
-            }
-        } else {
-            console.log('✅ Supabase connection test successful');
-        }
-    } catch (err) {
-        console.error('❌ Supabase connection test failed:', err);
-    }
-});
+window.markHelpful = async function(id) {
+    if (!currentUser) { alert("Login first"); return; }
+    let { data } = await sb.from('ideas').select('*').eq('id', id);
+    if (data[0].author === currentUser) { alert("Can't mark your own"); return; }
+    await sb.from('ideas').update({ helpful_count: data[0].helpful_count + 1 }).eq('id', id);
+    await loadFeed();
+    alert("Thanks for helping!");
+};
+
+function escapeHtml(t) { if (!t) return ''; let d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 </script>
 </body>
 </html>
