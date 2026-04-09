@@ -1,372 +1,402 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMPACTA - Share Ideas</title>
+    <title>IMPACTA</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #E31B23 0%, #8B0000 50%, #1a1a2e 100%);
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #E31B23, #8B0000);
             color: white;
+            text-align: center;
+            padding: 50px;
+            min-height: 100vh;
+            margin: 0;
         }
-        .container {
+        .box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            border-radius: 30px;
             max-width: 500px;
             margin: 0 auto;
-            padding: 20px;
-        }
-        .card {
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            border-radius: 30px;
-            padding: 30px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.2);
-            margin-top: 50px;
-        }
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #fff, #ff9999);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 14px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 25px;
-            background: rgba(255,255,255,0.15);
-            color: white;
-            font-size: 1rem;
-            font-family: inherit;
-        }
-        input::placeholder, textarea::placeholder {
-            color: rgba(255,255,255,0.6);
-        }
-        button {
-            width: 100%;
-            padding: 14px;
-            margin: 8px 0;
-            border: none;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            background: linear-gradient(135deg, #E31B23, #b01018);
-            color: white;
-            transition: transform 0.2s;
-        }
-        button:active {
-            transform: scale(0.98);
-        }
-        .idea-card {
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 15px;
-            margin: 10px 0;
-            text-align: left;
-        }
-        .idea-question {
-            font-weight: bold;
-            color: #ff9999;
-            margin-bottom: 8px;
-        }
-        .idea-author {
-            font-size: 0.8rem;
-            opacity: 0.7;
-            margin-bottom: 5px;
-        }
-        .helpful-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 5px 15px;
-            width: auto;
-            margin-top: 10px;
-        }
-        .nav-buttons {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .nav-buttons button {
-            width: 50%;
-            background: rgba(255,255,255,0.2);
-        }
-        .active-tab {
-            background: linear-gradient(135deg, #E31B23, #b01018) !important;
-        }
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        #appBox {
-            display: none;
+            display: block;
         }
         .hidden {
-            display: none;
+            display: none !important;
         }
-        .success {
-            background: #00C853;
-            color: white;
+        input, textarea {
+            padding: 12px;
+            margin: 10px;
+            border-radius: 25px;
+            border: none;
+            width: 80%;
+            font-family: Arial, sans-serif;
+        }
+        textarea {
+            resize: vertical;
+        }
+        button {
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 25px;
+            border: none;
+            background: white;
+            color: #E31B23;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .idea {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 10px;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: left;
+        }
+        .idea button {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        #feed {
+            max-height: 400px;
+            overflow-y: auto;
             padding: 10px;
-            border-radius: 50px;
-            margin: 10px 0;
-            animation: fadeOut 3s ease forwards;
         }
-        @keyframes fadeOut {
-            0% { opacity: 1; }
-            70% { opacity: 1; }
-            100% { opacity: 0; display: none; }
+        .error-message {
+            color: #ffcccc;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- LOGIN SECTION -->
-        <div id="loginBox" class="card">
-            <h1>🌱 IMPACTA</h1>
-            <p style="margin-bottom: 20px;">Small steps lead to big impact</p>
-            <input type="text" id="username" placeholder="Enter your username">
-            <button id="loginButton">Login or Sign Up</button>
-            <p style="margin-top: 15px; font-size: 0.8rem;">No password needed</p>
-        </div>
+<div id="loginBox" class="box">
+    <h1>🚀 IMPACTA</h1>
+    <p>Share your ideas and help others</p>
+    <input type="text" id="username" placeholder="Enter username" maxlength="50">
+    <br>
+    <button id="loginBtn">Login / Sign Up</button>
+<footer>
+   <p>&copy;2026 IMPACTA WEB APP , LLC . ALL RIGHTS RESERVED</p>
+</footer>
+</div>
 
-        <!-- MAIN APP SECTION -->
-        <div id="appBox" class="card">
-            <h2>Welcome, <span id="currentUser">---</span>!</h2>
-            
-            <div class="nav-buttons">
-                <button id="feedTabBtn" class="active-tab">Feed</button>
-                <button id="postTabBtn">Post Idea</button>
-                <button id="profileTabBtn">Profile</button>
-            </div>
-
-            <!-- FEED TAB -->
-            <div id="feedTab">
-                <div id="feedList" class="loading">Loading ideas...</div>
-            </div>
-
-            <!-- POST TAB -->
-            <div id="postTab" class="hidden">
-                <textarea id="question" rows="2" placeholder="What is the problem or question?"></textarea>
-                <textarea id="answer" rows="3" placeholder="What is your solution or answer?"></textarea>
-                <button id="postBtn">📤 Post Solution</button>
-            </div>
-
-            <!-- PROFILE TAB -->
-            <div id="profileTab" class="hidden">
-                <div style="background: rgba(255,255,255,0.1); border-radius: 20px; padding: 20px;">
-                    <p>📝 Ideas posted: <strong id="profileIdeas">0</strong></p>
-                    <p>✅ People helped: <strong id="profileHelpful">0</strong></p>
-                    <p>🏆 Impact points: <strong id="profilePoints">0</strong></p>
-                </div>
-            </div>
-
-            <button id="logoutBtn" style="margin-top: 20px; background: rgba(255,255,255,0.2);">Logout</button>
-        </div>
+<div id="appBox" class="box hidden">
+    <h2>Welcome, <span id="userName"></span>! 👋</h2>
+    <textarea id="question" rows="3" placeholder="What's your question? 🤔"></textarea>
+    <textarea id="answer" rows="3" placeholder="What's your answer? 💭"></textarea>
+    <br>
+    <button id="postBtn">📤 Post Idea</button>
+    
+    <h3>📋 Community Feed</h3>
+    <div id="feed">
+        <p>Loading ideas...</p>
     </div>
+    
+    <button id="logoutBtn" style="margin-top: 20px;">🚪 Logout</button>
+</div>
 
-    <script>
-        // ============ SUPABASE SETUP ============
-        const SUPABASE_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlnc2FjYmhjb2xodmtwY2F4cGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0ODQ2OTUsImV4cCI6MjA5MTA2MDY5NX0.XCX771p7GRrnti3ZlZE4Y1zWALbK_tvaL0wCNHUTVEI';
+<script>
+// Supabase configuration
+const SUPABASE_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5d29ra2ZuaG94d2JvaHlsaXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzQ5NzAsImV4cCI6MjA5MTE1MDk3MH0.hWrtxQ68HAqCz6ENf0DMkU-F2roQpndh_KErZHDz_6c';
+
+// Initialize Supabase client
+let supabase;
+try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('✅ Supabase client initialized successfully');
+} catch (error) {
+    console.error('❌ Failed to initialize Supabase:', error);
+    alert('Failed to connect to database. Please refresh the page.');
+}
+
+let currentUser = null;
+
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 IMPACTA app loaded');
+    
+    // Login handler
+    document.getElementById('loginBtn').addEventListener('click', async function() {
+        const username = document.getElementById('username').value.trim();
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        if (!username) {
+            alert('⚠️ Please enter a username');
+            return;
+        }
         
-        let currentUser = null;
-        let allIdeas = [];
-
-        // ============ DOM ELEMENTS ============
-        const loginBox = document.getElementById('loginBox');
-        const appBox = document.getElementById('appBox');
-        const currentUserSpan = document.getElementById('currentUser');
-        const feedList = document.getElementById('feedList');
-        const questionInput = document.getElementById('question');
-        const answerInput = document.getElementById('answer');
-        const feedTab = document.getElementById('feedTab');
-        const postTab = document.getElementById('postTab');
-        const profileTab = document.getElementById('profileTab');
-        const profileIdeasSpan = document.getElementById('profileIdeas');
-        const profileHelpfulSpan = document.getElementById('profileHelpful');
-        const profilePointsSpan = document.getElementById('profilePoints');
-
-        // ============ LOGIN ============
-        document.getElementById('loginButton').onclick = async () => {
-            const username = document.getElementById('username').value.trim();
-            if (!username) {
-                alert("Enter a username");
-                return;
-            }
-            currentUser = username;
-            currentUserSpan.innerText = username;
-            loginBox.style.display = 'none';
-            appBox.style.display = 'block';
-            await loadFeed();
-        };
-
-        // ============ LOGOUT ============
-        document.getElementById('logoutBtn').onclick = () => {
-            currentUser = null;
-            loginBox.style.display = 'block';
-            appBox.style.display = 'none';
-            document.getElementById('username').value = '';
-        };
-
-        // ============ TAB SWITCHING ============
-        document.getElementById('feedTabBtn').onclick = () => {
-            feedTab.classList.remove('hidden');
-            postTab.classList.add('hidden');
-            profileTab.classList.add('hidden');
-            document.getElementById('feedTabBtn').classList.add('active-tab');
-            document.getElementById('postTabBtn').classList.remove('active-tab');
-            document.getElementById('profileTabBtn').classList.remove('active-tab');
-            loadFeed();
-        };
+        if (username.length < 3) {
+            alert('⚠️ Username must be at least 3 characters');
+            return;
+        }
         
-        document.getElementById('postTabBtn').onclick = () => {
-            feedTab.classList.add('hidden');
-            postTab.classList.remove('hidden');
-            profileTab.classList.add('hidden');
-            document.getElementById('postTabBtn').classList.add('active-tab');
-            document.getElementById('feedTabBtn').classList.remove('active-tab');
-            document.getElementById('profileTabBtn').classList.remove('active-tab');
-        };
+        currentUser = username;
+        document.getElementById('userName').textContent = username;
         
-        document.getElementById('profileTabBtn').onclick = () => {
-            feedTab.classList.add('hidden');
-            postTab.classList.add('hidden');
-            profileTab.classList.remove('hidden');
-            document.getElementById('profileTabBtn').classList.add('active-tab');
-            document.getElementById('feedTabBtn').classList.remove('active-tab');
-            document.getElementById('postTabBtn').classList.remove('active-tab');
-            updateProfile();
-        };
-
-        // ============ POST IDEA ============
-        document.getElementById('postBtn').onclick = async () => {
-            if (!currentUser) return;
-            const question = questionInput.value.trim();
-            const answer = answerInput.value.trim();
-            if (!question || !answer) {
-                alert("Please write both a question and an answer");
-                return;
-            }
-            
-            const { error } = await supabase.from('ideas').insert({
-                author: currentUser,
-                question: question,
-                answer: answer,
-                helpful_count: 0
-            });
-            
-            if (error) {
-                alert("Error: " + error.message);
-                return;
-            }
-            
-            questionInput.value = '';
-            answerInput.value = '';
-            await loadFeed();
-            showSuccessMessage('✅ Idea posted! +10 impact points');
-            document.getElementById('feedTabBtn').click();
-        };
-
-        // ============ LOAD FEED ============
-        async function loadFeed() {
-            feedList.innerHTML = '<div class="loading">Loading ideas...</div>';
-            
+        // Switch views
+        document.getElementById('loginBox').classList.add('hidden');
+        document.getElementById('appBox').classList.remove('hidden');
+        
+        console.log('✅ User logged in:', username);
+        await loadFeed();
+    });
+    
+    // Logout handler
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+        console.log('👋 User logged out:', currentUser);
+        currentUser = null;
+        
+        // Clear all fields
+        document.getElementById('username').value = '';
+        document.getElementById('question').value = '';
+        document.getElementById('answer').value = '';
+        document.getElementById('feed').innerHTML = '<p>Loading ideas...</p>';
+        
+        // Switch views
+        document.getElementById('loginBox').classList.remove('hidden');
+        document.getElementById('appBox').classList.add('hidden');
+    });
+    
+    // Post idea handler
+    document.getElementById('postBtn').addEventListener('click', async function() {
+        if (!currentUser) {
+            alert('⚠️ Please login first');
+            return;
+        }
+        
+        const question = document.getElementById('question').value.trim();
+        const answer = document.getElementById('answer').value.trim();
+        
+        if (!question || !answer) {
+            alert('⚠️ Please fill in both question and answer');
+            return;
+        }
+        
+        if (question.length < 5 || answer.length < 5) {
+            alert('⚠️ Question and answer must be at least 5 characters');
+            return;
+        }
+        
+        // Disable button during submission
+        const postBtn = document.getElementById('postBtn');
+        postBtn.disabled = true;
+        postBtn.textContent = '⏳ Posting...';
+        
+        try {
             const { data, error } = await supabase
                 .from('ideas')
-                .select('*')
-                .order('created_at', { ascending: false });
+                .insert([{
+                    author: currentUser,
+                    question: question,
+                    answer: answer,
+                    helpful_count: 0
+                }])
+                .select();
             
             if (error) {
-                feedList.innerHTML = 'Error loading ideas: ' + error.message;
+                console.error('❌ Post error:', error);
+                
+                // Check if table doesn't exist
+                if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                    alert('❌ Database table not found. Please create the "ideas" table in Supabase.');
+                    console.error('Table creation needed. Create table "ideas" with columns: id, author, question, answer, helpful_count, created_at');
+                } else {
+                    alert('❌ Failed to post idea: ' + error.message);
+                }
                 return;
             }
             
-            allIdeas = data || [];
+            console.log('✅ Idea posted successfully:', data);
             
-            if (allIdeas.length === 0) {
-                feedList.innerHTML = 'No ideas yet. Be the first to post!';
-                return;
-            }
+            // Clear inputs
+            document.getElementById('question').value = '';
+            document.getElementById('answer').value = '';
             
-            feedList.innerHTML = allIdeas.map(idea => `
-                <div class="idea-card">
-                    <div class="idea-author">👤 ${escapeHtml(idea.author)}</div>
-                    <div class="idea-question">❓ ${escapeHtml(idea.question)}</div>
-                    <div>💡 ${escapeHtml(idea.answer)}</div>
-                    <button class="helpful-btn" data-id="${idea.id}">✅ Was this helpful? (${idea.helpful_count})</button>
-                </div>
-            `).join('');
-            
-            // Attach event listeners to all helpful buttons
-            document.querySelectorAll('.helpful-btn').forEach(btn => {
-                btn.onclick = () => markHelpful(parseInt(btn.dataset.id));
-            });
-        }
-
-        // ============ MARK HELPFUL ============
-        async function markHelpful(ideaId) {
-            if (!currentUser) {
-                alert("Please login first");
-                return;
-            }
-            
-            const idea = allIdeas.find(i => i.id === ideaId);
-            if (!idea) return;
-            
-            if (idea.author === currentUser) {
-                alert("You can't mark your own idea as helpful");
-                return;
-            }
-            
-            const newCount = (idea.helpful_count || 0) + 1;
-            await supabase.from('ideas').update({ helpful_count: newCount }).eq('id', ideaId);
+            // Refresh feed
             await loadFeed();
-            showSuccessMessage('✅ You helped someone! +5 impact points');
-        }
-
-        // ============ UPDATE PROFILE ============
-        function updateProfile() {
-            if (!currentUser) return;
-            const myIdeas = allIdeas.filter(idea => idea.author === currentUser);
-            const ideasCount = myIdeas.length;
-            const helpfulCount = myIdeas.reduce((sum, idea) => sum + (idea.helpful_count || 0), 0);
-            const points = (ideasCount * 10) + (helpfulCount * 5);
             
-            profileIdeasSpan.innerText = ideasCount;
-            profileHelpfulSpan.innerText = helpfulCount;
-            profilePointsSpan.innerText = points;
+            alert('✅ Idea posted successfully!');
+        } catch (err) {
+            console.error('❌ Unexpected error:', err);
+            alert('❌ An unexpected error occurred. Please try again.');
+        } finally {
+            // Re-enable button
+            postBtn.disabled = false;
+            postBtn.textContent = '📤 Post Idea';
         }
+    });
+    
+    // Allow Enter key to login
+    document.getElementById('username').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('loginBtn').click();
+        }
+    });
+});
 
-        // ============ SHOW SUCCESS MESSAGE ============
-        function showSuccessMessage(message) {
-            const container = document.querySelector('#appBox');
-            const successDiv = document.createElement('div');
-            successDiv.className = 'success';
-            successDiv.innerText = message;
-            container.insertBefore(successDiv, container.firstChild);
-            setTimeout(() => successDiv.remove(), 3000);
+// Load feed function
+async function loadFeed() {
+    const feedDiv = document.getElementById('feed');
+    feedDiv.innerHTML = '<p>⏳ Loading ideas...</p>';
+    
+    if (!supabase) {
+        feedDiv.innerHTML = '<p class="error-message">❌ Database connection failed</p>';
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('ideas')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+        
+        if (error) {
+            console.error('❌ Feed load error:', error);
+            
+            if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                feedDiv.innerHTML = `
+                    <p class="error-message">❌ Database table not found</p>
+                    <p style="font-size: 12px;">Please create the "ideas" table in your Supabase dashboard with these columns:<br>
+                    id (int8, auto-increment), author (text), question (text), answer (text), helpful_count (int8, default 0), created_at (timestamptz, default now())</p>
+                `;
+            } else {
+                feedDiv.innerHTML = '<p class="error-message">❌ Error loading ideas. Please try again.</p>';
+            }
+            return;
         }
+        
+        if (!data || data.length === 0) {
+            feedDiv.innerHTML = '<p>💡 No ideas yet. Be the first to post one!</p>';
+            return;
+        }
+        
+        console.log(`✅ Loaded ${data.length} ideas`);
+        
+        feedDiv.innerHTML = data.map(idea => `
+            <div class="idea">
+                <strong>👤 ${escapeHtml(idea.author)}</strong>
+                <p><strong>❓ ${escapeHtml(idea.question)}</strong></p>
+                <p>💡 ${escapeHtml(idea.answer)}</p>
+                <button onclick="markHelpful(${idea.id})" id="helpful-btn-${idea.id}">
+                    ✅ Helpful (${idea.helpful_count || 0})
+                </button>
+            </div>
+        `).join('');
+        
+    } catch (err) {
+        console.error('❌ Unexpected feed error:', err);
+        feedDiv.innerHTML = '<p class="error-message">❌ Failed to load feed</p>';
+    }
+}
 
-        // ============ HELPER ============
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+// Mark helpful function (must be global for onclick)
+window.markHelpful = async function(id) {
+    if (!currentUser) {
+        alert('⚠️ Please login first');
+        return;
+    }
+    
+    if (!supabase) {
+        alert('❌ Database connection failed');
+        return;
+    }
+    
+    const button = document.getElementById(`helpful-btn-${id}`);
+    if (button) {
+        button.disabled = true;
+        button.textContent = '⏳ Updating...';
+    }
+    
+    try {
+        // First, get the current idea
+        const { data, error } = await supabase
+            .from('ideas')
+            .select('author, helpful_count')
+            .eq('id', id)
+            .single();
+        
+        if (error) {
+            console.error('❌ Fetch error:', error);
+            alert('❌ Error fetching idea');
+            return;
         }
-    </script>
+        
+        if (!data) {
+            alert('❌ Idea not found');
+            return;
+        }
+        
+        // Check if user is trying to mark their own idea
+        if (data.author === currentUser) {
+            alert('⚠️ You cannot mark your own idea as helpful');
+            return;
+        }
+        
+        // Update helpful count
+        const newCount = (data.helpful_count || 0) + 1;
+        const { error: updateError } = await supabase
+            .from('ideas')
+            .update({ helpful_count: newCount })
+            .eq('id', id);
+        
+        if (updateError) {
+            console.error('❌ Update error:', updateError);
+            alert('❌ Failed to update helpful count');
+            return;
+        }
+        
+        console.log(`✅ Updated helpful count for idea ${id} to ${newCount}`);
+        
+        // Refresh the feed
+        await loadFeed();
+        
+        alert('✅ Thanks for marking this as helpful!');
+        
+    } catch (err) {
+        console.error('❌ Unexpected error:', err);
+        alert('❌ An unexpected error occurred');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = '✅ Helpful';
+        }
+    }
+};
+
+// HTML escape utility to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Test Supabase connection on load
+window.addEventListener('load', async function() {
+    if (!supabase) return;
+    
+    try {
+        // Test connection by trying to get the current timestamp from Supabase
+        const { data, error } = await supabase.from('ideas').select('count', { count: 'exact', head: true });
+        
+        if (error) {
+            if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                console.warn('⚠️ Database connection successful, but "ideas" table not found');
+                console.info('📝 Create the "ideas" table with: id (int8, auto-increment), author (text), question (text), answer (text), helpful_count (int8, default 0), created_at (timestamptz, default now())');
+            } else {
+                console.warn('⚠️ Supabase connection test:', error.message);
+            }
+        } else {
+            console.log('✅ Supabase connection test successful');
+        }
+    } catch (err) {
+        console.error('❌ Supabase connection test failed:', err);
+    }
+});
+</script>
 </body>
 </html>
