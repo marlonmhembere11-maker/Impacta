@@ -1,88 +1,490 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>IMPACTA</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMPACTA - Share Ideas</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body{font-family:Arial;background:linear-gradient(135deg,#E31B23,#8B0000);color:white;text-align:center;padding:50px;}
-        .box{background:rgba(0,0,0,0.4);padding:30px;border-radius:30px;max-width:500px;margin:0 auto;}
-        input,textarea{padding:12px;margin:10px;border-radius:25px;border:none;width:80%;}
-        button{padding:12px 24px;margin:10px;border-radius:25px;border:none;background:white;color:#E31B23;font-weight:bold;cursor:pointer;}
-        .hidden{display:none;}
-        .idea{background:rgba(255,255,255,0.1);margin:10px;padding:15px;border-radius:15px;text-align:left;}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #E31B23 0%, #8B0000 50%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff, #ff9999);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 1rem;
+        }
+        input::placeholder, textarea::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(135deg, #E31B23, #b01018);
+            color: white;
+            transition: transform 0.2s;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .idea-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: left;
+        }
+        .idea-question {
+            font-weight: bold;
+            color: #ff9999;
+            margin-bottom: 8px;
+        }
+        .idea-author {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        .helpful-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 5px 15px;
+            width: auto;
+            margin-top: 10px;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .nav-buttons button {
+            width: 50%;
+            background: rgba(255,255,255,0.2);
+        }
+        .active-tab {
+            background: linear-gradient(135deg, #E31B23, #b01018) !important;
+        }
+        .hidden {
+            display: none;
+        }
+        .success {
+            background: #00C853;
+            color: white;
+            padding: 10px;
+            border-radius: 50px;
+            margin: 10px 0;
+            animation: fadeOut 3s ease forwards;
+        }
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; display: none; }
+        }
+        .login-toggle {
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .login-toggle a {
+            color: #ff9999;
+            cursor: pointer;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-<div id="loginBox" class="box">
-    <h1>IMPACTA</h1>
-    <input type="text" id="username" placeholder="Enter username">
-    <br>
-    <button id="loginBtn">Login</button>
-</div>
-<div id="appBox" class="box hidden">
-    <h2>Welcome, <span id="userName"></span>!</h2>
-    <textarea id="question" rows="2" placeholder="Your question?"></textarea>
-    <textarea id="answer" rows="2" placeholder="Your answer?"></textarea>
-    <br>
-    <button id="postBtn">Post Idea</button>
-    <h3>Feed</h3>
-    <div id="feed"></div>
-    <button id="logoutBtn">Logout</button>
-</div>
-<script>
-// ONLY ONE DECLARATION - NO DUPLICATE
-const MY_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
-const MY_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5d29ra2ZuaG94d2JvaHlsaXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzQ5NzAsImV4cCI6MjA5MTE1MDk3MH0.hWrtxQ68HAqCz6ENf0DMkU-F2roQpndh_KErZHDz_6c';
-const sb = window.supabase.createClient(MY_URL, MY_KEY);
-let currentUser = null;
+    <div class="container">
+        <!-- LOGIN SECTION -->
+        <div id="loginBox" class="card">
+            <h1>🌱 IMPACTA</h1>
+            <p style="margin-bottom: 20px;">Small steps lead to big impact</p>
+            
+            <div id="loginForm">
+                <input type="text" id="loginUsername" placeholder="Username">
+                <input type="password" id="loginPassword" placeholder="Password">
+                <button id="doLoginBtn">Login</button>
+                <div class="login-toggle">
+                    Don't have an account? <a id="showSignupBtn">Sign Up</a>
+                </div>
+            </div>
+            
+            <div id="signupForm" class="hidden">
+                <input type="text" id="signupUsername" placeholder="Choose username">
+                <input type="password" id="signupPassword" placeholder="Choose password">
+                <button id="doSignupBtn">Sign Up</button>
+                <div class="login-toggle">
+                    Already have an account? <a id="showLoginBtn">Login</a>
+                </div>
+            </div>
+        </div>
 
-document.getElementById('loginBtn').onclick = async function() {
-    let name = document.getElementById('username').value.trim();
-    if (!name) { alert("Enter username"); return; }
-    currentUser = name;
-    document.getElementById('userName').innerText = name;
-    document.getElementById('loginBox').style.display = 'none';
-    document.getElementById('appBox').style.display = 'block';
-    await loadFeed();
-};
+        <!-- MAIN APP SECTION -->
+        <div id="appBox" class="card hidden">
+            <h2>Welcome, <span id="currentUser">---</span>!</h2>
+            
+            <div class="nav-buttons">
+                <button id="feedTabBtn" class="active-tab">Feed</button>
+                <button id="postTabBtn">Post Idea</button>
+                <button id="profileTabBtn">Profile</button>
+            </div>
 
-document.getElementById('logoutBtn').onclick = function() {
-    currentUser = null;
-    document.getElementById('loginBox').style.display = 'block';
-    document.getElementById('appBox').style.display = 'none';
-    document.getElementById('username').value = '';
-};
+            <!-- FEED TAB -->
+            <div id="feedTab">
+                <div id="feedList">Loading ideas...</div>
+            </div>
 
-document.getElementById('postBtn').onclick = async function() {
-    if (!currentUser) return;
-    let q = document.getElementById('question').value.trim();
-    let a = document.getElementById('answer').value.trim();
-    if (!q || !a) { alert("Write both"); return; }
-    await sb.from('ideas').insert({ author: currentUser, question: q, answer: a, helpful_count: 0 });
-    document.getElementById('question').value = '';
-    document.getElementById('answer').value = '';
-    await loadFeed();
-    alert("Posted!");
-};
+            <!-- POST TAB -->
+            <div id="postTab" class="hidden">
+                <textarea id="question" rows="2" placeholder="What is the problem or question?"></textarea>
+                <textarea id="answer" rows="3" placeholder="What is your solution or answer?"></textarea>
+                <button id="postBtn">📤 Post Solution</button>
+            </div>
 
-async function loadFeed() {
-    let feedDiv = document.getElementById('feed');
-    feedDiv.innerHTML = 'Loading...';
-    let { data } = await sb.from('ideas').select('*').order('created_at', { ascending: false });
-    if (!data || data.length === 0) { feedDiv.innerHTML = 'No ideas yet.'; return; }
-    feedDiv.innerHTML = data.map(idea => `<div class="idea"><strong>${escapeHtml(idea.author)}</strong><p><strong>❓ ${escapeHtml(idea.question)}</strong></p><p>💡 ${escapeHtml(idea.answer)}</p><button onclick="markHelpful(${idea.id})">✅ Helpful (${idea.helpful_count})</button></div>`).join('');
-}
+            <!-- PROFILE TAB -->
+            <div id="profileTab" class="hidden">
+                <div style="background: rgba(255,255,255,0.1); border-radius: 20px; padding: 20px;">
+                    <p>📝 Ideas posted: <strong id="profileIdeas">0</strong></p>
+                    <p>✅ People helped: <strong id="profileHelpful">0</strong></p>
+                    <p>🏆 Impact points: <strong id="profilePoints">0</strong></p>
+                </div>
+            </div>
 
-window.markHelpful = async function(id) {
-    if (!currentUser) { alert("Login first"); return; }
-    let { data } = await sb.from('ideas').select('*').eq('id', id);
-    if (data[0].author === currentUser) { alert("Can't mark your own"); return; }
-    await sb.from('ideas').update({ helpful_count: data[0].helpful_count + 1 }).eq('id', id);
-    await loadFeed();
-    alert("Thanks for helping!");
-};
+            <button id="logoutBtn" style="margin-top: 20px; background: rgba(255,255,255,0.2);">Logout</button>
+        </div>
+    </div>
 
-function escapeHtml(t) { if (!t) return ''; let d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-</script>
+    <script>
+        // ============ SUPABASE SETUP (ONLY ONCE) ============
+        const SB_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5d29ra2ZuaG94d2JvaHlsaXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzQ5NzAsImV4cCI6MjA5MTE1MDk3MH0.hWrtxQ68HAqCz6ENf0DMkU-F2roQpndh_KErZHDz_6c';
+        const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+        
+        let currentUser = null;
+        let allIdeas = [];
+
+        // ============ DOM ELEMENTS ============
+        const loginBox = document.getElementById('loginBox');
+        const appBox = document.getElementById('appBox');
+        const currentUserSpan = document.getElementById('currentUser');
+        const feedList = document.getElementById('feedList');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+
+        // ============ TOGGLE LOGIN/SIGNUP ============
+        document.getElementById('showSignupBtn').onclick = () => {
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+        };
+        document.getElementById('showLoginBtn').onclick = () => {
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+        };
+
+        // ============ SIGNUP ============
+        document.getElementById('doSignupBtn').onclick = async () => {
+            const username = document.getElementById('signupUsername').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            
+            if (!username || !password) {
+                alert("Enter username and password");
+                return;
+            }
+            
+            // Check if user exists
+            const { data: existing } = await supabase
+                .from('users')
+                .select('*')
+                .eq('username', username);
+            
+            if (existing && existing.length > 0) {
+                alert("Username already taken. Choose another.");
+                return;
+            }
+            
+            // Create user
+            const { error } = await supabase.from('users').insert({
+                username: username,
+                password: password,
+                ideas: 0,
+                helpful_received: 0
+            });
+            
+            if (error) {
+                alert("Error: " + error.message);
+                return;
+            }
+            
+            alert("Account created! Please login.");
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            document.getElementById('signupUsername').value = '';
+            document.getElementById('signupPassword').value = '';
+        };
+
+        // ============ LOGIN ============
+        document.getElementById('doLoginBtn').onclick = async () => {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                alert("Enter username and password");
+                return;
+            }
+            
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('username', username)
+                .eq('password', password);
+            
+            if (error || !data || data.length === 0) {
+                alert("Invalid username or password");
+                return;
+            }
+            
+            currentUser = data[0];
+            currentUserSpan.innerText = currentUser.username;
+            loginBox.style.display = 'none';
+            appBox.style.display = 'block';
+            await loadFeed();
+        };
+
+        // ============ LOGOUT ============
+        document.getElementById('logoutBtn').onclick = () => {
+            currentUser = null;
+            loginBox.style.display = 'block';
+            appBox.style.display = 'none';
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        };
+
+        // ============ TAB SWITCHING ============
+        document.getElementById('feedTabBtn').onclick = () => {
+            document.getElementById('feedTab').classList.remove('hidden');
+            document.getElementById('postTab').classList.add('hidden');
+            document.getElementById('profileTab').classList.add('hidden');
+            document.getElementById('feedTabBtn').classList.add('active-tab');
+            document.getElementById('postTabBtn').classList.remove('active-tab');
+            document.getElementById('profileTabBtn').classList.remove('active-tab');
+            loadFeed();
+        };
+        
+        document.getElementById('postTabBtn').onclick = () => {
+            document.getElementById('feedTab').classList.add('hidden');
+            document.getElementById('postTab').classList.remove('hidden');
+            document.getElementById('profileTab').classList.add('hidden');
+            document.getElementById('postTabBtn').classList.add('active-tab');
+            document.getElementById('feedTabBtn').classList.remove('active-tab');
+            document.getElementById('profileTabBtn').classList.remove('active-tab');
+        };
+        
+        document.getElementById('profileTabBtn').onclick = () => {
+            document.getElementById('feedTab').classList.add('hidden');
+            document.getElementById('postTab').classList.add('hidden');
+            document.getElementById('profileTab').classList.remove('hidden');
+            document.getElementById('profileTabBtn').classList.add('active-tab');
+            document.getElementById('feedTabBtn').classList.remove('active-tab');
+            document.getElementById('postTabBtn').classList.remove('active-tab');
+            updateProfile();
+        };
+
+        // ============ POST IDEA ============
+        document.getElementById('postBtn').onclick = async () => {
+            if (!currentUser) return;
+            const question = document.getElementById('question').value.trim();
+            const answer = document.getElementById('answer').value.trim();
+            
+            if (!question || !answer) {
+                alert("Please write both a question and an answer");
+                return;
+            }
+            
+            const { error } = await supabase.from('ideas').insert({
+                author: currentUser.username,
+                question: question,
+                answer: answer,
+                helpful_count: 0
+            });
+            
+            if (error) {
+                alert("Error: " + error.message);
+                return;
+            }
+            
+            // Update user's ideas count
+            await supabase.from('users').update({ ideas: (currentUser.ideas || 0) + 1 }).eq('id', currentUser.id);
+            currentUser.ideas = (currentUser.ideas || 0) + 1;
+            
+            document.getElementById('question').value = '';
+            document.getElementById('answer').value = '';
+            await loadFeed();
+            showSuccessMessage('✅ Idea posted! +10 impact points');
+            document.getElementById('feedTabBtn').click();
+        };
+
+        // ============ LOAD FEED ============
+        async function loadFeed() {
+            feedList.innerHTML = 'Loading ideas...';
+            
+            const { data, error } = await supabase
+                .from('ideas')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                feedList.innerHTML = 'Error loading ideas';
+                return;
+            }
+            
+            allIdeas = data || [];
+            
+            if (allIdeas.length === 0) {
+                feedList.innerHTML = 'No ideas yet. Be the first to post!';
+                return;
+            }
+            
+            feedList.innerHTML = allIdeas.map(idea => `
+                <div class="idea-card">
+                    <div class="idea-author">👤 ${escapeHtml(idea.author)}</div>
+                    <div class="idea-question">❓ ${escapeHtml(idea.question)}</div>
+                    <div>💡 ${escapeHtml(idea.answer)}</div>
+                    <button class="helpful-btn" data-id="${idea.id}">✅ Was this helpful? (${idea.helpful_count})</button>
+                </div>
+            `).join('');
+            
+            // Attach event listeners
+            document.querySelectorAll('.helpful-btn').forEach(btn => {
+                btn.onclick = () => markHelpful(parseInt(btn.dataset.id));
+            });
+        }
+
+        // ============ MARK HELPFUL (ONE PER USER) ============
+        async function markHelpful(ideaId) {
+            if (!currentUser) {
+                alert("Please login first");
+                return;
+            }
+            
+            const idea = allIdeas.find(i => i.id === ideaId);
+            if (!idea) return;
+            
+            if (idea.author === currentUser.username) {
+                alert("You can't mark your own idea as helpful");
+                return;
+            }
+            
+            // Check if user already marked this idea as helpful
+            const { data: existing } = await supabase
+                .from('helpful_votes')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .eq('idea_id', ideaId);
+            
+            if (existing && existing.length > 0) {
+                alert("You already marked this idea as helpful");
+                return;
+            }
+            
+            // Record the vote
+            await supabase.from('helpful_votes').insert({
+                user_id: currentUser.id,
+                idea_id: ideaId
+            });
+            
+            // Update idea helpful count
+            const newCount = (idea.helpful_count || 0) + 1;
+            await supabase.from('ideas').update({ helpful_count: newCount }).eq('id', ideaId);
+            
+            // Update author's helpful received count
+            const { data: author } = await supabase.from('users').select('*').eq('username', idea.author);
+            if (author && author.length > 0) {
+                await supabase.from('users').update({ helpful_received: (author[0].helpful_received || 0) + 1 }).eq('id', author[0].id);
+            }
+            
+            await loadFeed();
+            showSuccessMessage('✅ You helped someone! +5 impact points');
+        }
+
+        // ============ UPDATE PROFILE ============
+        async function updateProfile() {
+            if (!currentUser) return;
+            
+            // Get fresh user data
+            const { data: freshUser } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', currentUser.id);
+            
+            if (freshUser && freshUser.length > 0) {
+                currentUser = freshUser[0];
+                currentUserSpan.innerText = currentUser.username;
+            }
+            
+            const myIdeas = allIdeas.filter(idea => idea.author === currentUser.username);
+            const ideasCount = myIdeas.length;
+            const helpfulCount = myIdeas.reduce((sum, idea) => sum + (idea.helpful_count || 0), 0);
+            const points = (ideasCount * 10) + (helpfulCount * 5);
+            
+            document.getElementById('profileIdeas').innerText = ideasCount;
+            document.getElementById('profileHelpful').innerText = helpfulCount;
+            document.getElementById('profilePoints').innerText = points;
+        }
+
+        // ============ SHOW SUCCESS MESSAGE ============
+        function showSuccessMessage(message) {
+            const container = document.querySelector('#appBox');
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.innerText = message;
+            container.insertBefore(successDiv, container.firstChild);
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        // ============ HELPER ============
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
 </body>
 </html>
