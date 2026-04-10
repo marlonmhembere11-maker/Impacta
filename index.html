@@ -193,9 +193,9 @@
 
     <script>
         // ============ SUPABASE SETUP (ONLY ONCE) ============
-        const SB_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
-        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5d29ra2ZuaG94d2JvaHlsaXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzQ5NzAsImV4cCI6MjA5MTE1MDk3MH0.hWrtxQ68HAqCz6ENf0DMkU-F2roQpndh_KErZHDz_6c';
-        const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+        const SUPABASE_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5d29ra2ZuaG94d2JvaHlsaXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzQ5NzAsImV4cCI6MjA5MTE1MDk3MH0.hWrtxQ68HAqCz6ENf0DMkU-F2roQpndh_KErZHDz_6c';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let currentUser = null;
         let allIdeas = [];
