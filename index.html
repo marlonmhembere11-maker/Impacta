@@ -192,7 +192,7 @@
     </div>
 
     <script>
-        // ============ SUPABASE SETUP (ONLY ONCE) ============
+        // ============ SUPABASE SETUP ============
         const SUPABASE_URL = 'https://yywokkfnhoxwbohylisw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5d29ra2ZuaG94d2JvaHlsaXN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzQ5NzAsImV4cCI6MjA5MTE1MDk3MH0.hWrtxQ68HAqCz6ENf0DMkU-F2roQpndh_KErZHDz_6c';
         const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -200,7 +200,7 @@
         let currentUser = null;
         let allIdeas = [];
 
-        // ============ DOM ELEMENTS ============
+        // DOM elements
         const loginBox = document.getElementById('loginBox');
         const appBox = document.getElementById('appBox');
         const currentUserSpan = document.getElementById('currentUser');
@@ -208,7 +208,7 @@
         const loginForm = document.getElementById('loginForm');
         const signupForm = document.getElementById('signupForm');
 
-        // ============ TOGGLE LOGIN/SIGNUP ============
+        // Toggle between login and signup
         document.getElementById('showSignupBtn').onclick = () => {
             loginForm.classList.add('hidden');
             signupForm.classList.remove('hidden');
@@ -224,39 +224,44 @@
             const password = document.getElementById('signupPassword').value;
             
             if (!username || !password) {
-                alert("Enter username and password");
+                alert("Please enter both username and password");
                 return;
             }
             
-            // Check if user exists
-            const { data: existing } = await supabase
+            // Check if username already exists
+            const { data: existing, error: checkError } = await supabase
                 .from('users')
-                .select('*')
+                .select('username')
                 .eq('username', username);
             
+            if (checkError) {
+                alert("Error checking username: " + checkError.message);
+                return;
+            }
+            
             if (existing && existing.length > 0) {
-                alert("Username already taken. Choose another.");
+                alert("Username already taken. Please choose another.");
                 return;
             }
             
-            // Create user
-            const { error } = await supabase.from('users').insert({
-                username: username,
-                password: password,
-                ideas: 0,
-                helpful_received: 0
-            });
+            // Create new user
+            const { data: newUser, error: insertError } = await supabase
+                .from('users')
+                .insert([{ username: username, password: password, ideas: 0, helpful_received: 0 }])
+                .select();
             
-            if (error) {
-                alert("Error: " + error.message);
+            if (insertError) {
+                alert("Signup failed: " + insertError.message);
                 return;
             }
             
-            alert("Account created! Please login.");
-            signupForm.classList.add('hidden');
-            loginForm.classList.remove('hidden');
+            alert("✅ Account created successfully! Please login.");
+            
+            // Clear signup form and show login form
             document.getElementById('signupUsername').value = '';
             document.getElementById('signupPassword').value = '';
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
         };
 
         // ============ LOGIN ============
@@ -265,7 +270,7 @@
             const password = document.getElementById('loginPassword').value;
             
             if (!username || !password) {
-                alert("Enter username and password");
+                alert("Please enter username and password");
                 return;
             }
             
@@ -275,7 +280,12 @@
                 .eq('username', username)
                 .eq('password', password);
             
-            if (error || !data || data.length === 0) {
+            if (error) {
+                alert("Login error: " + error.message);
+                return;
+            }
+            
+            if (!data || data.length === 0) {
                 alert("Invalid username or password");
                 return;
             }
@@ -345,7 +355,7 @@
             });
             
             if (error) {
-                alert("Error: " + error.message);
+                alert("Error posting: " + error.message);
                 return;
             }
             
@@ -396,7 +406,7 @@
             });
         }
 
-        // ============ MARK HELPFUL (ONE PER USER) ============
+        // ============ MARK HELPFUL ============
         async function markHelpful(ideaId) {
             if (!currentUser) {
                 alert("Please login first");
@@ -411,7 +421,7 @@
                 return;
             }
             
-            // Check if user already marked this idea as helpful
+            // Check if already voted
             const { data: existing } = await supabase
                 .from('helpful_votes')
                 .select('*')
@@ -419,11 +429,11 @@
                 .eq('idea_id', ideaId);
             
             if (existing && existing.length > 0) {
-                alert("You already marked this idea as helpful");
+                alert("You already marked this as helpful");
                 return;
             }
             
-            // Record the vote
+            // Record vote
             await supabase.from('helpful_votes').insert({
                 user_id: currentUser.id,
                 idea_id: ideaId
