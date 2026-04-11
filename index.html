@@ -85,12 +85,13 @@
             opacity: 0.7;
             margin-bottom: 5px;
         }
-        .helpful-btn {
+        .helpful-btn, .edit-btn, .delete-btn {
             background: rgba(255,255,255,0.2);
             color: white;
             padding: 5px 15px;
             width: auto;
             margin-top: 10px;
+            margin-right: 8px;
         }
         .nav-buttons {
             display: flex;
@@ -143,6 +144,40 @@
             color: #ff9999;
             font-size: 1.3rem;
             float: right;
+        }
+        .idea-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #1a1a2e;
+            padding: 25px;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .modal-content h3 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .modal-content textarea {
+            margin: 10px 0;
         }
     </style>
 </head>
@@ -208,6 +243,17 @@
         </div>
     </div>
 
+    <!-- EDIT MODAL -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>✏️ Edit Your Idea</h3>
+            <textarea id="editQuestion" rows="2" placeholder="Question"></textarea>
+            <textarea id="editAnswer" rows="3" placeholder="Answer"></textarea>
+            <button id="saveEditBtn">Save Changes</button>
+            <button id="cancelEditBtn">Cancel</button>
+        </div>
+    </div>
+
     <script>
         // ============ SUPABASE SETUP - USING YOUR WORKING PATTERN ============
         const MY_URL = 'https://ygsacbhcolhvkpcaxpic.supabase.co';
@@ -216,6 +262,7 @@
         
         let currentUser = null;
         let allIdeas = [];
+        let currentEditId = null;
 
         // ============ DOM ELEMENTS ============
         const loginBox = document.getElementById('loginBox');
@@ -407,15 +454,74 @@
                     <div class="idea-author">👤 ${escapeHtml(idea.author)}</div>
                     <div class="idea-question">❓ ${escapeHtml(idea.question)}</div>
                     <div>💡 ${escapeHtml(idea.answer)}</div>
-                    <button class="helpful-btn" data-id="${idea.id}">✅ Was this helpful? (${idea.helpful_count})</button>
+                    <div class="idea-buttons">
+                        <button class="helpful-btn" data-id="${idea.id}">✅ Was this helpful? (${idea.helpful_count})</button>
+                        ${idea.author === currentUser.username ? `
+                            <button class="edit-btn" data-id="${idea.id}">✏️ Edit</button>
+                            <button class="delete-btn" data-id="${idea.id}">🗑️ Delete</button>
+                        ` : ''}
+                    </div>
                 </div>
             `).join('');
             
-            // Attach event listeners to helpful buttons
+            attachIdeaEvents();
+        }
+
+        // ============ ATTACH BUTTON EVENTS ============
+        function attachIdeaEvents() {
+            // Helpful buttons
             document.querySelectorAll('.helpful-btn').forEach(btn => {
                 btn.onclick = () => markHelpful(parseInt(btn.dataset.id));
             });
+            
+            // Edit buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const ideaId = parseInt(btn.dataset.id);
+                    const idea = allIdeas.find(i => i.id === ideaId);
+                    currentEditId = ideaId;
+                    document.getElementById('editQuestion').value = idea.question;
+                    document.getElementById('editAnswer').value = idea.answer;
+                    document.getElementById('editModal').classList.remove('hidden');
+                };
+            });
+            
+            // Delete buttons
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = async () => {
+                    if (confirm('Are you sure you want to delete this idea?')) {
+                        const ideaId = parseInt(btn.dataset.id);
+                        await sb.from('ideas').delete().eq('id', ideaId);
+                        await loadFeed();
+                        showSuccessMessage('🗑️ Idea deleted');
+                    }
+                };
+            });
         }
+
+        // ============ EDIT MODAL FUNCTIONS ============
+        document.getElementById('saveEditBtn').onclick = async () => {
+            const newQuestion = document.getElementById('editQuestion').value.trim();
+            const newAnswer = document.getElementById('editAnswer').value.trim();
+            
+            if (!newQuestion || !newAnswer) {
+                alert("Please write both a question and an answer");
+                return;
+            }
+            
+            await sb.from('ideas').update({ 
+                question: newQuestion, 
+                answer: newAnswer 
+            }).eq('id', currentEditId);
+            
+            document.getElementById('editModal').classList.add('hidden');
+            await loadFeed();
+            showSuccessMessage('✅ Idea updated!');
+        };
+        
+        document.getElementById('cancelEditBtn').onclick = () => {
+            document.getElementById('editModal').classList.add('hidden');
+        };
 
         // ============ MARK HELPFUL (ONE PER USER) ============
         async function markHelpful(ideaId) {
