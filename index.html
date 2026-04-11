@@ -151,7 +151,6 @@
             gap: 8px;
             margin-top: 10px;
         }
-        /* Modal styles */
         .modal {
             position: fixed;
             top: 0;
@@ -243,7 +242,7 @@
         </div>
     </div>
 
-    <!-- EDIT MODAL -->
+    <!-- EDIT MODAL (hidden by default) -->
     <div id="editModal" class="modal hidden">
         <div class="modal-content">
             <h3>✏️ Edit Your Idea</h3>
@@ -255,7 +254,7 @@
     </div>
 
     <script>
-        // ============ SUPABASE SETUP - USING YOUR WORKING PATTERN ============
+        // ============ SUPABASE SETUP ============
         const MY_URL = 'https://ygsacbhcolhvkpcaxpic.supabase.co';
         const MY_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlnc2FjYmhjb2xodmtwY2F4cGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0ODQ2OTUsImV4cCI6MjA5MTA2MDY5NX0.XCX771p7GRrnti3ZlZE4Y1zWALbK_tvaL0wCNHUTVEI';
         const sb = window.supabase.createClient(MY_URL, MY_KEY);
@@ -271,6 +270,7 @@
         const feedList = document.getElementById('feedList');
         const loginForm = document.getElementById('loginForm');
         const signupForm = document.getElementById('signupForm');
+        const editModal = document.getElementById('editModal');
 
         // ============ TOGGLE LOGIN/SIGNUP ============
         document.getElementById('showSignupBtn').onclick = () => {
@@ -292,7 +292,6 @@
                 return;
             }
             
-            // Check if user exists
             const { data: existing } = await sb
                 .from('users')
                 .select('username')
@@ -303,7 +302,6 @@
                 return;
             }
             
-            // Create new user
             const { error } = await sb
                 .from('users')
                 .insert([{ username: username, password: password, ideas: 0, helpful_received: 0 }]);
@@ -315,7 +313,6 @@
             
             alert("✅ Account created successfully! Please login.");
             
-            // Clear and show login form
             document.getElementById('signupUsername').value = '';
             document.getElementById('signupPassword').value = '';
             signupForm.classList.add('hidden');
@@ -417,7 +414,6 @@
                 return;
             }
             
-            // Update user's ideas count
             await sb.from('users').update({ ideas: (currentUser.ideas || 0) + 1 }).eq('id', currentUser.id);
             currentUser.ideas = (currentUser.ideas || 0) + 1;
             
@@ -479,10 +475,12 @@
                 btn.onclick = () => {
                     const ideaId = parseInt(btn.dataset.id);
                     const idea = allIdeas.find(i => i.id === ideaId);
-                    currentEditId = ideaId;
-                    document.getElementById('editQuestion').value = idea.question;
-                    document.getElementById('editAnswer').value = idea.answer;
-                    document.getElementById('editModal').classList.remove('hidden');
+                    if (idea) {
+                        currentEditId = ideaId;
+                        document.getElementById('editQuestion').value = idea.question;
+                        document.getElementById('editAnswer').value = idea.answer;
+                        editModal.classList.remove('hidden');
+                    }
                 };
             });
             
@@ -514,16 +512,16 @@
                 answer: newAnswer 
             }).eq('id', currentEditId);
             
-            document.getElementById('editModal').classList.add('hidden');
+            editModal.classList.add('hidden');
             await loadFeed();
             showSuccessMessage('✅ Idea updated!');
         };
         
         document.getElementById('cancelEditBtn').onclick = () => {
-            document.getElementById('editModal').classList.add('hidden');
+            editModal.classList.add('hidden');
         };
 
-        // ============ MARK HELPFUL (ONE PER USER) ============
+        // ============ MARK HELPFUL ============
         async function markHelpful(ideaId) {
             if (!currentUser) {
                 alert("Please login first");
@@ -538,7 +536,6 @@
                 return;
             }
             
-            // Check if user already voted for this idea
             const { data: existing } = await sb
                 .from('helpful_votes')
                 .select('*')
@@ -550,17 +547,14 @@
                 return;
             }
             
-            // Record the vote
             await sb.from('helpful_votes').insert({
                 user_id: currentUser.id,
                 idea_id: ideaId
             });
             
-            // Update idea helpful count
             const newCount = (idea.helpful_count || 0) + 1;
             await sb.from('ideas').update({ helpful_count: newCount }).eq('id', ideaId);
             
-            // Update author's helpful received count
             const { data: author } = await sb.from('users').select('*').eq('username', idea.author);
             if (author && author.length > 0) {
                 await sb.from('users').update({ helpful_received: (author[0].helpful_received || 0) + 1 }).eq('id', author[0].id);
@@ -574,7 +568,6 @@
         async function updateProfile() {
             if (!currentUser) return;
             
-            // Get fresh user data
             const { data: freshUser } = await sb
                 .from('users')
                 .select('*')
