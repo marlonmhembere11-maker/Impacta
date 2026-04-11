@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMPACTA - SMALL STEPS LEAD TO BIG IMPACT</title>
+    <title>IMPACTA - Share Ideas</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -84,13 +84,15 @@
             font-size: 0.8rem;
             opacity: 0.7;
             margin-bottom: 5px;
+            cursor: pointer;
         }
-        .helpful-btn {
+        .helpful-btn, .edit-btn, .delete-btn, .comment-btn {
             background: rgba(255,255,255,0.2);
             color: white;
             padding: 5px 15px;
             width: auto;
             margin-top: 10px;
+            margin-right: 8px;
         }
         .nav-buttons {
             display: flex;
@@ -144,15 +146,84 @@
             font-size: 1.3rem;
             float: right;
         }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #1a1a2e;
+            padding: 25px;
+            border-radius: 25px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .modal-content h3 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .modal-content textarea {
+            margin: 10px 0;
+        }
+        .idea-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        /* Comments section */
+        .comments-section {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        .comment {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 10px;
+            margin: 8px 0;
+        }
+        .comment-author {
+            font-size: 0.75rem;
+            color: #ff9999;
+            margin-bottom: 5px;
+        }
+        .comment-text {
+            font-size: 0.85rem;
+        }
+        .add-comment {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .add-comment input {
+            flex: 1;
+            padding: 8px;
+            margin: 0;
+            font-size: 0.85rem;
+        }
+        .add-comment button {
+            width: auto;
+            padding: 8px 15px;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- LOGIN SECTION -->
+        <!-- LOGIN SECTION (Now on Profile Page) -->
         <div id="loginBox" class="card">
             <h1>🌱 IMPACTA</h1>
             <p style="margin-bottom: 20px;">Small steps lead to big impact</p>
-            <p style="margin-bottom: 15px;">Join the world full of problem solvers now!</p>
+            <p style="margin-bottom: 15px;">Join the world full of problem solvers</p>
             
             <div id="loginForm">
                 <input type="text" id="loginUsername" placeholder="Username">
@@ -202,20 +273,36 @@
                     <p>✅ People helped: <strong id="profileHelpful">0</strong></p>
                     <p>🏆 Impact points: <strong id="profilePoints">0</strong></p>
                 </div>
+                <div class="login-toggle" style="margin-top: 20px;">
+                    <a id="logoutLink">Logout</a>
+                </div>
             </div>
 
             <button id="logoutBtn" style="margin-top: 20px; background: rgba(255,255,255,0.2);">Logout</button>
         </div>
     </div>
 
+    <!-- EDIT MODAL -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>✏️ Edit Your Idea</h3>
+            <textarea id="editQuestion" rows="2" placeholder="Question"></textarea>
+            <textarea id="editAnswer" rows="3" placeholder="Answer"></textarea>
+            <button id="saveEditBtn">Save Changes</button>
+            <button id="cancelEditBtn">Cancel</button>
+        </div>
+    </div>
+
     <script>
-        // ============ SUPABASE SETUP - USING YOUR WORKING PATTERN ============
+        // ============ SUPABASE SETUP ============
         const MY_URL = 'https://ygsacbhcolhvkpcaxpic.supabase.co';
         const MY_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlnc2FjYmhjb2xodmtwY2F4cGljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0ODQ2OTUsImV4cCI6MjA5MTA2MDY5NX0.XCX771p7GRrnti3ZlZE4Y1zWALbK_tvaL0wCNHUTVEI';
         const sb = window.supabase.createClient(MY_URL, MY_KEY);
         
         let currentUser = null;
         let allIdeas = [];
+        let allComments = [];
+        let currentEditId = null;
 
         // ============ DOM ELEMENTS ============
         const loginBox = document.getElementById('loginBox');
@@ -245,7 +332,6 @@
                 return;
             }
             
-            // Check if user exists
             const { data: existing } = await sb
                 .from('users')
                 .select('username')
@@ -256,7 +342,6 @@
                 return;
             }
             
-            // Create new user
             const { error } = await sb
                 .from('users')
                 .insert([{ username: username, password: password, ideas: 0, helpful_received: 0 }]);
@@ -268,7 +353,6 @@
             
             alert("✅ Account created successfully! Please login.");
             
-            // Clear and show login form
             document.getElementById('signupUsername').value = '';
             document.getElementById('signupPassword').value = '';
             signupForm.classList.add('hidden');
@@ -305,11 +389,19 @@
             currentUserSpan.innerText = currentUser.username;
             loginBox.style.display = 'none';
             appBox.style.display = 'block';
+            await loadComments();
             await loadFeed();
         };
 
         // ============ LOGOUT ============
         document.getElementById('logoutBtn').onclick = () => {
+            currentUser = null;
+            loginBox.style.display = 'block';
+            appBox.style.display = 'none';
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        };
+        document.getElementById('logoutLink').onclick = () => {
             currentUser = null;
             loginBox.style.display = 'block';
             appBox.style.display = 'none';
@@ -370,7 +462,6 @@
                 return;
             }
             
-            // Update user's ideas count
             await sb.from('users').update({ ideas: (currentUser.ideas || 0) + 1 }).eq('id', currentUser.id);
             currentUser.ideas = (currentUser.ideas || 0) + 1;
             
@@ -380,6 +471,31 @@
             showSuccessMessage('✅ Idea posted! +10 impact points');
             document.getElementById('feedTabBtn').click();
         };
+
+        // ============ LOAD COMMENTS ============
+        async function loadComments() {
+            const { data } = await sb.from('comments').select('*');
+            allComments = data || [];
+        }
+
+        // ============ ADD COMMENT ============
+        async function addComment(ideaId, commentText) {
+            if (!currentUser) {
+                alert("Please login to comment");
+                return;
+            }
+            
+            if (!commentText.trim()) return;
+            
+            await sb.from('comments').insert({
+                user_id: currentUser.id,
+                idea_id: ideaId,
+                comment: commentText.trim()
+            });
+            
+            await loadComments();
+            await loadFeed();
+        }
 
         // ============ LOAD FEED ============
         async function loadFeed() {
@@ -402,22 +518,94 @@
                 return;
             }
             
-            feedList.innerHTML = allIdeas.map(idea => `
+            feedList.innerHTML = allIdeas.map(idea => {
+                const ideaComments = allComments.filter(c => c.idea_id === idea.id);
+                return `
                 <div class="idea-card">
-                    <div class="idea-author">👤 ${escapeHtml(idea.author)}</div>
+                    <div class="idea-author" onclick="viewProfile('${idea.author}')">👤 ${escapeHtml(idea.author)}</div>
                     <div class="idea-question">❓ ${escapeHtml(idea.question)}</div>
                     <div>💡 ${escapeHtml(idea.answer)}</div>
-                    <button class="helpful-btn" data-id="${idea.id}">✅ Was this helpful? (${idea.helpful_count})</button>
+                    <div class="idea-buttons">
+                        <button class="helpful-btn" data-id="${idea.id}">✅ Was this helpful? (${idea.helpful_count})</button>
+                        ${idea.author === currentUser.username ? `
+                            <button class="edit-btn" data-id="${idea.id}">✏️ Edit</button>
+                            <button class="delete-btn" data-id="${idea.id}">🗑️ Delete</button>
+                        ` : ''}
+                        <button class="comment-btn" data-id="${idea.id}" onclick="toggleComments(${idea.id})">💬 Comments (${ideaComments.length})</button>
+                    </div>
+                    <div id="comments-${idea.id}" class="comments-section hidden">
+                        <div id="comments-list-${idea.id}">
+                            ${ideaComments.map(c => `
+                                <div class="comment">
+                                    <div class="comment-author">${escapeHtml(c.username) || 'User'} · ${new Date(c.created_at).toLocaleDateString()}</div>
+                                    <div class="comment-text">${escapeHtml(c.comment)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="add-comment">
+                            <input type="text" id="comment-input-${idea.id}" placeholder="Write a comment...">
+                            <button onclick="submitComment(${idea.id})">Post</button>
+                        </div>
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
             
-            // Attach event listeners to helpful buttons
+            attachIdeaEvents();
+        }
+
+        // ============ TOGGLE COMMENTS ============
+        window.toggleComments = (ideaId) => {
+            const commentsDiv = document.getElementById(`comments-${ideaId}`);
+            if (commentsDiv) {
+                commentsDiv.classList.toggle('hidden');
+            }
+        };
+
+        // ============ SUBMIT COMMENT ============
+        window.submitComment = async (ideaId) => {
+            const input = document.getElementById(`comment-input-${ideaId}`);
+            const commentText = input.value;
+            if (!commentText.trim()) return;
+            
+            await addComment(ideaId, commentText);
+            input.value = '';
+        };
+
+        // ============ VIEW PROFILE ============
+        window.viewProfile = (username) => {
+            showToast(`Viewing ${username}'s profile - Coming soon!`);
+        };
+
+        // ============ ATTACH BUTTON EVENTS ============
+        function attachIdeaEvents() {
             document.querySelectorAll('.helpful-btn').forEach(btn => {
                 btn.onclick = () => markHelpful(parseInt(btn.dataset.id));
             });
+            
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const ideaId = parseInt(btn.dataset.id);
+                    const idea = allIdeas.find(i => i.id === ideaId);
+                    currentEditId = ideaId;
+                    document.getElementById('editQuestion').value = idea.question;
+                    document.getElementById('editAnswer').value = idea.answer;
+                    document.getElementById('editModal').classList.remove('hidden');
+                };
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = async () => {
+                    if (confirm('Are you sure you want to delete this idea?')) {
+                        const ideaId = parseInt(btn.dataset.id);
+                        await sb.from('ideas').delete().eq('id', ideaId);
+                        await loadFeed();
+                        showSuccessMessage('🗑️ Idea deleted');
+                    }
+                };
+            });
         }
 
-        // ============ MARK HELPFUL (ONE PER USER) ============
+        // ============ MARK HELPFUL ============
         async function markHelpful(ideaId) {
             if (!currentUser) {
                 alert("Please login first");
@@ -432,7 +620,6 @@
                 return;
             }
             
-            // Check if user already voted for this idea
             const { data: existing } = await sb
                 .from('helpful_votes')
                 .select('*')
@@ -444,17 +631,14 @@
                 return;
             }
             
-            // Record the vote
             await sb.from('helpful_votes').insert({
                 user_id: currentUser.id,
                 idea_id: ideaId
             });
             
-            // Update idea helpful count
             const newCount = (idea.helpful_count || 0) + 1;
             await sb.from('ideas').update({ helpful_count: newCount }).eq('id', ideaId);
             
-            // Update author's helpful received count
             const { data: author } = await sb.from('users').select('*').eq('username', idea.author);
             if (author && author.length > 0) {
                 await sb.from('users').update({ helpful_received: (author[0].helpful_received || 0) + 1 }).eq('id', author[0].id);
@@ -468,7 +652,6 @@
         async function updateProfile() {
             if (!currentUser) return;
             
-            // Get fresh user data
             const { data: freshUser } = await sb
                 .from('users')
                 .select('*')
@@ -489,6 +672,30 @@
             document.getElementById('profilePoints').innerText = points;
         }
 
+        // ============ EDIT MODAL FUNCTIONS ============
+        document.getElementById('saveEditBtn').onclick = async () => {
+            const newQuestion = document.getElementById('editQuestion').value.trim();
+            const newAnswer = document.getElementById('editAnswer').value.trim();
+            
+            if (!newQuestion || !newAnswer) {
+                alert("Please write both a question and an answer");
+                return;
+            }
+            
+            await sb.from('ideas').update({ 
+                question: newQuestion, 
+                answer: newAnswer 
+            }).eq('id', currentEditId);
+            
+            document.getElementById('editModal').classList.add('hidden');
+            await loadFeed();
+            showSuccessMessage('✅ Idea updated!');
+        };
+        
+        document.getElementById('cancelEditBtn').onclick = () => {
+            document.getElementById('editModal').classList.add('hidden');
+        };
+
         // ============ SHOW SUCCESS MESSAGE ============
         function showSuccessMessage(message) {
             const container = document.querySelector('#appBox');
@@ -497,6 +704,15 @@
             successDiv.innerText = message;
             container.insertBefore(successDiv, container.firstChild);
             setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        function showToast(message) {
+            const container = document.querySelector('#appBox');
+            const toastDiv = document.createElement('div');
+            toastDiv.className = 'success';
+            toastDiv.innerText = message;
+            container.insertBefore(toastDiv, container.firstChild);
+            setTimeout(() => toastDiv.remove(), 3000);
         }
 
         // ============ HELPER ============
