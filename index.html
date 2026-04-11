@@ -152,16 +152,19 @@
             margin-top: 10px;
         }
         .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.9);
-            display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
+        }
+        .modal.show {
+            display: flex;
         }
         .modal-content {
             background: #1a1a2e;
@@ -242,8 +245,8 @@
         </div>
     </div>
 
-    <!-- EDIT MODAL (hidden by default) -->
-    <div id="editModal" class="modal hidden">
+    <!-- EDIT MODAL -->
+    <div id="editModal" class="modal">
         <div class="modal-content">
             <h3>✏️ Edit Your Idea</h3>
             <textarea id="editQuestion" rows="2" placeholder="Question"></textarea>
@@ -263,7 +266,7 @@
         let allIdeas = [];
         let currentEditId = null;
 
-        // ============ DOM ELEMENTS ============
+        // DOM elements
         const loginBox = document.getElementById('loginBox');
         const appBox = document.getElementById('appBox');
         const currentUserSpan = document.getElementById('currentUser');
@@ -272,7 +275,7 @@
         const signupForm = document.getElementById('signupForm');
         const editModal = document.getElementById('editModal');
 
-        // ============ TOGGLE LOGIN/SIGNUP ============
+        // Toggle login/signup
         document.getElementById('showSignupBtn').onclick = () => {
             loginForm.classList.add('hidden');
             signupForm.classList.remove('hidden');
@@ -282,7 +285,7 @@
             loginForm.classList.remove('hidden');
         };
 
-        // ============ SIGNUP ============
+        // Signup
         document.getElementById('doSignupBtn').onclick = async () => {
             const username = document.getElementById('signupUsername').value.trim();
             const password = document.getElementById('signupPassword').value;
@@ -292,34 +295,26 @@
                 return;
             }
             
-            const { data: existing } = await sb
-                .from('users')
-                .select('username')
-                .eq('username', username);
-            
+            const { data: existing } = await sb.from('users').select('username').eq('username', username);
             if (existing && existing.length > 0) {
                 alert("Username already taken. Please choose another.");
                 return;
             }
             
-            const { error } = await sb
-                .from('users')
-                .insert([{ username: username, password: password, ideas: 0, helpful_received: 0 }]);
-            
+            const { error } = await sb.from('users').insert([{ username: username, password: password, ideas: 0, helpful_received: 0 }]);
             if (error) {
                 alert("Signup failed: " + error.message);
                 return;
             }
             
             alert("✅ Account created successfully! Please login.");
-            
             document.getElementById('signupUsername').value = '';
             document.getElementById('signupPassword').value = '';
             signupForm.classList.add('hidden');
             loginForm.classList.remove('hidden');
         };
 
-        // ============ LOGIN ============
+        // Login
         document.getElementById('doLoginBtn').onclick = async () => {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
@@ -329,12 +324,7 @@
                 return;
             }
             
-            const { data, error } = await sb
-                .from('users')
-                .select('*')
-                .eq('username', username)
-                .eq('password', password);
-            
+            const { data, error } = await sb.from('users').select('*').eq('username', username).eq('password', password);
             if (error) {
                 alert("Login error: " + error.message);
                 return;
@@ -352,7 +342,7 @@
             await loadFeed();
         };
 
-        // ============ LOGOUT ============
+        // Logout
         document.getElementById('logoutBtn').onclick = () => {
             currentUser = null;
             loginBox.style.display = 'block';
@@ -361,7 +351,7 @@
             document.getElementById('loginPassword').value = '';
         };
 
-        // ============ TAB SWITCHING ============
+        // Tab switching
         document.getElementById('feedTabBtn').onclick = () => {
             document.getElementById('feedTab').classList.remove('hidden');
             document.getElementById('postTab').classList.add('hidden');
@@ -391,7 +381,7 @@
             updateProfile();
         };
 
-        // ============ POST IDEA ============
+        // Post idea
         document.getElementById('postBtn').onclick = async () => {
             if (!currentUser) return;
             const question = document.getElementById('question').value.trim();
@@ -424,22 +414,17 @@
             document.getElementById('feedTabBtn').click();
         };
 
-        // ============ LOAD FEED ============
+        // Load feed
         async function loadFeed() {
             feedList.innerHTML = 'Loading ideas...';
             
-            const { data, error } = await sb
-                .from('ideas')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
+            const { data, error } = await sb.from('ideas').select('*').order('created_at', { ascending: false });
             if (error) {
                 feedList.innerHTML = 'Error loading ideas';
                 return;
             }
             
             allIdeas = data || [];
-            
             if (allIdeas.length === 0) {
                 feedList.innerHTML = 'No ideas yet. Be the first to post!';
                 return;
@@ -463,14 +448,12 @@
             attachIdeaEvents();
         }
 
-        // ============ ATTACH BUTTON EVENTS ============
+        // Attach button events
         function attachIdeaEvents() {
-            // Helpful buttons
             document.querySelectorAll('.helpful-btn').forEach(btn => {
                 btn.onclick = () => markHelpful(parseInt(btn.dataset.id));
             });
             
-            // Edit buttons
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.onclick = () => {
                     const ideaId = parseInt(btn.dataset.id);
@@ -479,12 +462,11 @@
                         currentEditId = ideaId;
                         document.getElementById('editQuestion').value = idea.question;
                         document.getElementById('editAnswer').value = idea.answer;
-                        editModal.classList.remove('hidden');
+                        editModal.classList.add('show');
                     }
                 };
             });
             
-            // Delete buttons
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.onclick = async () => {
                     if (confirm('Are you sure you want to delete this idea?')) {
@@ -497,31 +479,7 @@
             });
         }
 
-        // ============ EDIT MODAL FUNCTIONS ============
-        document.getElementById('saveEditBtn').onclick = async () => {
-            const newQuestion = document.getElementById('editQuestion').value.trim();
-            const newAnswer = document.getElementById('editAnswer').value.trim();
-            
-            if (!newQuestion || !newAnswer) {
-                alert("Please write both a question and an answer");
-                return;
-            }
-            
-            await sb.from('ideas').update({ 
-                question: newQuestion, 
-                answer: newAnswer 
-            }).eq('id', currentEditId);
-            
-            editModal.classList.add('hidden');
-            await loadFeed();
-            showSuccessMessage('✅ Idea updated!');
-        };
-        
-        document.getElementById('cancelEditBtn').onclick = () => {
-            editModal.classList.add('hidden');
-        };
-
-        // ============ MARK HELPFUL ============
+        // Mark helpful
         async function markHelpful(ideaId) {
             if (!currentUser) {
                 alert("Please login first");
@@ -530,28 +488,18 @@
             
             const idea = allIdeas.find(i => i.id === ideaId);
             if (!idea) return;
-            
             if (idea.author === currentUser.username) {
                 alert("You can't mark your own idea as helpful");
                 return;
             }
             
-            const { data: existing } = await sb
-                .from('helpful_votes')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .eq('idea_id', ideaId);
-            
+            const { data: existing } = await sb.from('helpful_votes').select('*').eq('user_id', currentUser.id).eq('idea_id', ideaId);
             if (existing && existing.length > 0) {
                 alert("You already marked this idea as helpful");
                 return;
             }
             
-            await sb.from('helpful_votes').insert({
-                user_id: currentUser.id,
-                idea_id: ideaId
-            });
-            
+            await sb.from('helpful_votes').insert({ user_id: currentUser.id, idea_id: ideaId });
             const newCount = (idea.helpful_count || 0) + 1;
             await sb.from('ideas').update({ helpful_count: newCount }).eq('id', ideaId);
             
@@ -564,15 +512,11 @@
             showSuccessMessage('✅ You helped someone! +5 impact points');
         }
 
-        // ============ UPDATE PROFILE ============
+        // Update profile
         async function updateProfile() {
             if (!currentUser) return;
             
-            const { data: freshUser } = await sb
-                .from('users')
-                .select('*')
-                .eq('id', currentUser.id);
-            
+            const { data: freshUser } = await sb.from('users').select('*').eq('id', currentUser.id);
             if (freshUser && freshUser.length > 0) {
                 currentUser = freshUser[0];
                 currentUserSpan.innerText = currentUser.username;
@@ -588,7 +532,27 @@
             document.getElementById('profilePoints').innerText = points;
         }
 
-        // ============ SHOW SUCCESS MESSAGE ============
+        // Edit modal buttons
+        document.getElementById('saveEditBtn').onclick = async () => {
+            const newQuestion = document.getElementById('editQuestion').value.trim();
+            const newAnswer = document.getElementById('editAnswer').value.trim();
+            
+            if (!newQuestion || !newAnswer) {
+                alert("Please write both a question and an answer");
+                return;
+            }
+            
+            await sb.from('ideas').update({ question: newQuestion, answer: newAnswer }).eq('id', currentEditId);
+            editModal.classList.remove('show');
+            await loadFeed();
+            showSuccessMessage('✅ Idea updated!');
+        };
+        
+        document.getElementById('cancelEditBtn').onclick = () => {
+            editModal.classList.remove('show');
+        };
+
+        // Show success message
         function showSuccessMessage(message) {
             const container = document.querySelector('#appBox');
             const successDiv = document.createElement('div');
@@ -598,7 +562,7 @@
             setTimeout(() => successDiv.remove(), 3000);
         }
 
-        // ============ HELPER ============
+        // Helper
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
